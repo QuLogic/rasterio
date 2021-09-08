@@ -207,7 +207,7 @@ elif cpp11_flag not in eca:
 cpp_ext_options['extra_compile_args'] = eca
 
 # Configure optional Cython coverage.
-cythonize_options = {"language_level": sys.version_info[0], "compiler_directives": {"freethreading_compatible": True}}
+cythonize_options = {"language_level": sys.version_info[0]}
 if os.environ.get('CYTHON_COVERAGE'):
     cythonize_options['compiler_directives'].update(linetrace=True)
     cythonize_options['annotate'] = True
@@ -273,7 +273,6 @@ extra_reqs = {
         "fsspec",
         "hypothesis",
         "packaging",
-        "pytest-cov>=2.2.0",
         "pytest>=2.8.2",
         "shapely",
     ],
