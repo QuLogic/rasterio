@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 import sys
 
 from affine import Affine
@@ -37,6 +38,10 @@ from .conftest import gdal_version
 
 log = logging.getLogger(__name__)
 
+# Make a gdal version tuple.
+version_name = rasterio.gdal_version()
+version_name = re.split(r"[a-z]", version_name)[0]
+gdal_version_info = tuple(int(x) for x in version_name.split("."))
 
 DST_TRANSFORM = Affine(300.0, 0.0, -8789636.708, 0.0, -300.0, 2943560.235)
 
@@ -1293,7 +1298,39 @@ def test_reproject_resampling(path_rgb_byte_tif, method):
     assert np.count_nonzero(out) in expected[method]
 
 
-@pytest.mark.parametrize("test3d,count_nonzero", [(True, 1309625), (False, 437686)])
+@pytest.mark.parametrize(
+    "test3d,count_nonzero",
+    [
+        pytest.param(
+            True,
+            1309625,
+            marks=pytest.mark.skipif(
+                gdal_version_info >= (3, 10, 2), reason="See GDAL gh-11713"
+            ),
+        ),
+        pytest.param(
+            True,
+            1314520,
+            marks=pytest.mark.skipif(
+                gdal_version_info < (3, 10, 2), reason="See GDAL gh-11713"
+            ),
+        ),
+        pytest.param(
+            False,
+            437686,
+            marks=pytest.mark.skipif(
+                gdal_version_info >= (3, 10, 2), reason="See GDAL gh-11713"
+            ),
+        ),
+        pytest.param(
+            False,
+            438113,
+            marks=pytest.mark.skipif(
+                gdal_version_info < (3, 10, 2), reason="See GDAL gh-11713"
+            ),
+        ),
+    ],
+)
 def test_reproject_array_interface(test3d, count_nonzero, path_rgb_byte_tif):
     class DataArray:
         def __init__(self, data):
@@ -1332,16 +1369,50 @@ def test_reproject_array_interface(test3d, count_nonzero, path_rgb_byte_tif):
         pytest.param(
             True,
             1308064,
-            marks=pytest.mark.skipif(
-                not gdal_version.at_least("3.8"), reason="Requires GDAL 3.8.x"
-            ),
+            marks=[
+                pytest.mark.skipif(
+                    not gdal_version.at_least("3.8"), reason="Requires GDAL 3.8.x"
+                ),
+                pytest.mark.skipif(
+                    gdal_version_info >= (3, 10, 2), reason="See GDAL gh-11713"
+                ),
+            ],
+        ),
+        pytest.param(
+            True,
+            1312959,
+            marks=[
+                pytest.mark.skipif(
+                    not gdal_version.at_least("3.8"), reason="Requires GDAL 3.8.x"
+                ),
+                pytest.mark.skipif(
+                    gdal_version_info < (3, 10, 2), reason="See GDAL gh-11713"
+                ),
+            ],
         ),
         pytest.param(
             False,
             437686,
-            marks=pytest.mark.skipif(
-                not gdal_version.at_least("3.8"), reason="Requires GDAL 3.8.x"
-            ),
+            marks=[
+                pytest.mark.skipif(
+                    not gdal_version.at_least("3.8"), reason="Requires GDAL 3.8.x"
+                ),
+                pytest.mark.skipif(
+                    gdal_version_info >= (3, 10, 2), reason="See GDAL gh-11713"
+                ),
+            ],
+        ),
+        pytest.param(
+            False,
+            438113,
+            marks=[
+                pytest.mark.skipif(
+                    not gdal_version.at_least("3.8"), reason="Requires GDAL 3.8.x"
+                ),
+                pytest.mark.skipif(
+                    gdal_version_info < (3, 10, 2), reason="See GDAL gh-11713"
+                ),
+            ],
         ),
     ],
 )
